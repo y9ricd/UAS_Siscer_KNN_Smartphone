@@ -1,0 +1,151 @@
+{
+  "best_k": 9,
+  "train_accuracy": 0.878,
+  "test_accuracy": 0.806,
+  "confusion_matrix": [
+    [
+      112,
+      13,
+      0,
+      0
+    ],
+    [
+      7,
+      99,
+      19,
+      0
+    ],
+    [
+      0,
+      21,
+      86,
+      18
+    ],
+    [
+      0,
+      0,
+      19,
+      106
+    ]
+  ],
+  "classification_report": {
+    "0 (Murah)": {
+      "precision": 0.9411764705882353,
+      "recall": 0.896,
+      "f1-score": 0.9180327868852459,
+      "support": 125.0
+    },
+    "1 (Menengah)": {
+      "precision": 0.7443609022556391,
+      "recall": 0.792,
+      "f1-score": 0.7674418604651163,
+      "support": 125.0
+    },
+    "2 (Mahal)": {
+      "precision": 0.6935483870967742,
+      "recall": 0.688,
+      "f1-score": 0.6907630522088354,
+      "support": 125.0
+    },
+    "3 (Flagship)": {
+      "precision": 0.8548387096774194,
+      "recall": 0.848,
+      "f1-score": 0.8514056224899599,
+      "support": 125.0
+    },
+    "accuracy": 0.806,
+    "macro avg": {
+      "precision": 0.8084811174045171,
+      "recall": 0.806,
+      "f1-score": 0.8069108305122894,
+      "support": 500.0
+    },
+    "weighted avg": {
+      "precision": 0.808481117404517,
+      "recall": 0.806,
+      "f1-score": 0.8069108305122894,
+      "support": 500.0
+    }
+  },
+  "feature_names": [
+    "ram",
+    "battery_power",
+    "int_memory",
+    "px_width",
+    "px_height",
+    "pc"
+  ],
+  "feature_ranges": {
+    "ram": {
+      "min": 256,
+      "max": 3998,
+      "median": 2146
+    },
+    "battery_power": {
+      "min": 501,
+      "max": 1998,
+      "median": 1226
+    },
+    "int_memory": {
+      "min": 2,
+      "max": 64,
+      "median": 32
+    },
+    "px_width": {
+      "min": 500,
+      "max": 1998,
+      "median": 1247
+    },
+    "px_height": {
+      "min": 0,
+      "max": 1960,
+      "median": 564
+    },
+    "pc": {
+      "min": 0,
+      "max": 20,
+      "median": 10
+    }
+  },
+  "class_labels": {
+    "0": "Murah",
+    "1": "Menengah",
+    "2": "Mahal",
+    "3": "Flagship"
+  },
+  "dataset_rows": 2000,
+  "train_rows": 1500,
+  "test_rows": 500,
+  "k_experiment": [
+    {
+      "k": 3,
+      "train_accuracy": 0.908,
+      "test_accuracy": 0.77,
+      "gap": 0.138
+    },
+    {
+      "k": 5,
+      "train_accuracy": 0.888,
+      "test_accuracy": 0.782,
+      "gap": 0.106
+    },
+    {
+      "k": 7,
+      "train_accuracy": 0.884,
+      "test_accuracy": 0.796,
+      "gap": 0.088
+    },
+    {
+      "k": 9,
+      "train_accuracy": 0.878,
+      "test_accuracy": 0.806,
+      "gap": 0.072
+    },
+    {
+      "k": 11,
+      "train_accuracy": 0.8733,
+      "test_accuracy": 0.802,
+      "gap": 0.0713
+    }
+  ]
+}

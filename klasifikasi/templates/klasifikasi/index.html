@@ -1,0 +1,444 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistem Klasifikasi Harga Smartphone (KNN) — Django</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Fira+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{% static 'klasifikasi/styles.css' %}">
+</head>
+<body>
+  <main class="container">
+    <header class="hero-header">
+      <div class="brand-wrap">
+        <div class="brand-icon" aria-hidden="true">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="2" width="12" height="20" rx="2"></rect>
+            <line x1="12" y1="18" x2="12.01" y2="18"></line>
+          </svg>
+        </div>
+        <div>
+          <h1 class="hero-title">Sistem Klasifikasi Rentang Harga Smartphone</h1>
+          <p class="hero-subtitle">
+            Proyek Akhir UAS Sistem Cerdas (TI24317) &middot; Django + KNN &amp; StandardScaler
+          </p>
+        </div>
+      </div>
+      {% if data_evaluasi %}
+      <div class="header-badge mono">
+        <span class="header-badge-dot" aria-hidden="true"></span>
+        Model Aktif: KNN (k={{ data_evaluasi.best_k }}) &middot; Uji {{ data_evaluasi.test_accuracy }}%
+      </div>
+      {% endif %}
+    </header>
+
+    {% if error_sistem %}
+    <div class="alert alert-error" role="alert">
+      <strong>Kesalahan Sistem:</strong> {{ error_sistem }}
+    </div>
+    {% endif %}
+
+    <nav class="tab-bar" role="tablist" aria-label="Menu Utama">
+      <button
+        type="button"
+        id="tab-btn-prediksi"
+        class="tab-btn {% if tab_aktif == 'prediksi' %}is-active{% endif %}"
+        role="tab"
+        aria-selected="{% if tab_aktif == 'prediksi' %}true{% else %}false{% endif %}"
+        aria-controls="panel-prediksi"
+        data-tab="prediksi"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <line x1="4" y1="21" x2="4" y2="14"></line>
+          <line x1="4" y1="10" x2="4" y2="3"></line>
+          <line x1="12" y1="21" x2="12" y2="12"></line>
+          <line x1="12" y1="8" x2="12" y2="3"></line>
+          <line x1="20" y1="21" x2="20" y2="16"></line>
+          <line x1="20" y1="12" x2="20" y2="3"></line>
+          <line x1="1" y1="14" x2="7" y2="14"></line>
+          <line x1="9" y1="8" x2="15" y2="8"></line>
+          <line x1="17" y1="16" x2="23" y2="16"></line>
+        </svg>
+        Prediksi Harga
+      </button>
+      <button
+        type="button"
+        id="tab-btn-evaluasi"
+        class="tab-btn {% if tab_aktif == 'evaluasi' %}is-active{% endif %}"
+        role="tab"
+        aria-selected="{% if tab_aktif == 'evaluasi' %}true{% else %}false{% endif %}"
+        aria-controls="panel-evaluasi"
+        data-tab="evaluasi"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <path d="M3 3v18h18"></path>
+          <rect x="7" y="10" width="3" height="7"></rect>
+          <rect x="12" y="6" width="3" height="11"></rect>
+          <rect x="17" y="13" width="3" height="4"></rect>
+        </svg>
+        Evaluasi Model
+      </button>
+    </nav>
+
+    <!-- TAB 1: PREDIKSI HARGA -->
+    <section
+      id="panel-prediksi"
+      class="tab-panel {% if tab_aktif == 'prediksi' %}is-active{% endif %}"
+      role="tabpanel"
+      aria-labelledby="tab-btn-prediksi"
+    >
+      <div class="card">
+        <h2 class="card-title">Simulasi Prediksi Kategori Harga Smartphone</h2>
+        <p class="card-desc">
+          Sesuaikan 6 spesifikasi hardware di bawah ini sesuai rentang dataset, atau pilih salah satu skenario uji cepat, lalu klik tombol <strong>Prediksi Kategori Harga</strong>.
+        </p>
+
+        <div class="preset-bar">
+          <span class="preset-label">Skenario Uji Cepat:</span>
+          <button type="button" class="preset-btn" data-preset="low">Spek Rendah (Murah)</button>
+          <button type="button" class="preset-btn" data-preset="mid">Spek Menengah</button>
+          <button type="button" class="preset-btn" data-preset="high">Spek Tinggi (Flagship)</button>
+        </div>
+
+        <form method="post" action="{% url 'beranda' %}">
+          {% csrf_token %}
+          <div class="grid-2">
+            <div class="group-box">
+              <h3 class="group-heading">Performa &amp; Penyimpanan</h3>
+              {% for s in slider_performa %}
+              <div class="slider-item">
+                <div class="slider-top">
+                  <label class="slider-label" for="{{ s.id_for_label }}">{{ s.label }}</label>
+                  <span class="slider-value mono" id="val-{{ s.name }}">{{ s.value }} {{ s.unit }}</span>
+                </div>
+                <input
+                  type="range"
+                  name="{{ s.name }}"
+                  id="{{ s.id_for_label }}"
+                  min="{{ s.min }}"
+                  max="{{ s.max }}"
+                  step="{{ s.step }}"
+                  value="{{ s.value }}"
+                  data-unit="{{ s.unit }}"
+                  data-target="val-{{ s.name }}"
+                >
+                <p class="slider-help">{{ s.help_text }}</p>
+                {% if s.errors %}
+                <p class="field-error">{{ s.errors|join:", " }}</p>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+
+            <div class="group-box">
+              <h3 class="group-heading">Layar &amp; Kamera</h3>
+              {% for s in slider_layar %}
+              <div class="slider-item">
+                <div class="slider-top">
+                  <label class="slider-label" for="{{ s.id_for_label }}">{{ s.label }}</label>
+                  <span class="slider-value mono" id="val-{{ s.name }}">{{ s.value }} {{ s.unit }}</span>
+                </div>
+                <input
+                  type="range"
+                  name="{{ s.name }}"
+                  id="{{ s.id_for_label }}"
+                  min="{{ s.min }}"
+                  max="{{ s.max }}"
+                  step="{{ s.step }}"
+                  value="{{ s.value }}"
+                  data-unit="{{ s.unit }}"
+                  data-target="val-{{ s.name }}"
+                >
+                <p class="slider-help">{{ s.help_text }}</p>
+                {% if s.errors %}
+                <p class="field-error">{{ s.errors|join:", " }}</p>
+                {% endif %}
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+
+          <button type="submit" class="btn-primary">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+            Prediksi Kategori Harga
+          </button>
+        </form>
+      </div>
+
+      {% if hasil_prediksi %}
+      <div class="card" aria-live="polite">
+        <div class="alert alert-success">
+          Prediksi selesai: Smartphone masuk ke kategori <strong>{{ hasil_prediksi.nama }} (Kelas {{ hasil_prediksi.kelas }})</strong>.
+        </div>
+
+        <div class="grid-4" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
+          <div class="metric-card is-highlight">
+            <div class="metric-label">Kategori Harga</div>
+            <div class="metric-value">{{ hasil_prediksi.nama }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Label Kelas Target</div>
+            <div class="metric-value mono">Kelas {{ hasil_prediksi.kelas }}</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-label">Probabilitas Kelas Terpilih</div>
+            <div class="metric-value mono">{{ hasil_prediksi.keyakinan }}%</div>
+          </div>
+        </div>
+
+        <div class="alert alert-info">
+          <strong>Kisaran Harga Ilustratif:</strong> {{ hasil_prediksi.kisaran }} &mdash; {{ hasil_prediksi.deskripsi }}
+          <br>
+          <small>Catatan: Dataset asli menggunakan label kelas relatif 0&ndash;3, sehingga nominal Rupiah di atas bersifat ilustratif.</small>
+        </div>
+
+        <h3 class="card-title" style="font-size: 1.02rem; margin-bottom: 14px;">Distribusi Probabilitas 4 Kelas Harga</h3>
+        <div class="grid-2" style="align-items: start;">
+          <div class="prob-list">
+            {% for item in hasil_prediksi.probabilitas_kelas %}
+            <div class="prob-row">
+              <div class="prob-name">{{ item.kelas }} &ndash; {{ item.nama }}</div>
+              <div class="prob-track" aria-hidden="true">
+                <div class="prob-fill {% if item.terpilih %}is-selected{% endif %}" style="width: {{ item.persen }}%;"></div>
+              </div>
+              <div class="prob-pct mono">{{ item.persen }}%</div>
+            </div>
+            {% endfor %}
+          </div>
+
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Kelas</th>
+                  <th>Kategori</th>
+                  <th>Probabilitas</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for item in hasil_prediksi.probabilitas_kelas %}
+                <tr class="{% if item.terpilih %}row-selected{% endif %}">
+                  <td class="mono">{{ item.kelas }}</td>
+                  <td>{{ item.nama }}</td>
+                  <td class="mono">{{ item.persen }}%</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      {% else %}
+      <div class="alert alert-info">
+        Atur 6 slider spesifikasi hardware di atas, lalu klik <strong>Prediksi Kategori Harga</strong> untuk melihat hasil klasifikasi dan grafik probabilitas 4 kelas.
+      </div>
+      {% endif %}
+    </section>
+
+    <!-- TAB 2: EVALUASI MODEL -->
+    <section
+      id="panel-evaluasi"
+      class="tab-panel {% if tab_aktif == 'evaluasi' %}is-active{% endif %}"
+      role="tabpanel"
+      aria-labelledby="tab-btn-evaluasi"
+    >
+      {% if data_evaluasi %}
+      <div class="grid-4">
+        <div class="metric-card">
+          <div class="metric-label">Akurasi Data Latih</div>
+          <div class="metric-value mono">{{ data_evaluasi.train_accuracy }}%</div>
+        </div>
+        <div class="metric-card is-highlight">
+          <div class="metric-label">Akurasi Data Uji</div>
+          <div class="metric-value mono">{{ data_evaluasi.test_accuracy }}%</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Selisih Latih vs Uji</div>
+          <div class="metric-value mono">{{ data_evaluasi.gap }}%</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-label">Nilai k Terpilih</div>
+          <div class="metric-value mono">k = {{ data_evaluasi.best_k }}</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="card-title">Confusion Matrix Data Uji ({{ data_evaluasi.test_rows }} Data)</h2>
+        <p class="card-desc">
+          Pembagian data menggunakan stratified split: {{ data_evaluasi.train_rows }} data latih (75%) dan {{ data_evaluasi.test_rows }} data uji (25%) dari total {{ data_evaluasi.dataset_rows }} baris dataset. Sel diagonal berwarna biru tua menunjukkan prediksi tepat.
+        </p>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Aktual \ Prediksi</th>
+                {% for lbl in data_evaluasi.label_kelas %}
+                <th>{{ lbl }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+            <tbody>
+              {% for baris in data_evaluasi.confusion_matrix_rows %}
+              <tr>
+                <td class="row-head">{{ baris.label }}</td>
+                {% for sel in baris.sel %}
+                <td class="mono cm-lv-{{ sel.level }}">{{ sel.nilai }}</td>
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h2 class="card-title">Eksperimen Nilai k Ganjil (3, 5, 7, 9, 11)</h2>
+          <p class="card-desc">
+            Membandingkan akurasi latih dan akurasi uji untuk memilih nilai k yang optimal tanpa overfitting.
+          </p>
+          <div class="k-chart-list">
+            {% for item in data_evaluasi.k_experiment %}
+            <div class="k-chart-item {% if item.terpilih %}is-best{% endif %}">
+              <div class="k-chart-head">
+                <span class="mono">k = {{ item.k }} {% if item.terpilih %}<span class="badge-pill">Terpilih</span>{% endif %}</span>
+                <span class="mono">Selisih: {{ item.gap_pct }}%</span>
+              </div>
+              <div class="k-bar-stack">
+                <div class="k-bar-row">
+                  <span>Latih</span>
+                  <div class="k-bar-track"><div class="k-bar-train" style="width: {{ item.train_pct }}%;"></div></div>
+                  <span class="mono">{{ item.train_pct }}%</span>
+                </div>
+                <div class="k-bar-row">
+                  <span>Uji</span>
+                  <div class="k-bar-track"><div class="k-bar-test" style="width: {{ item.test_pct }}%;"></div></div>
+                  <span class="mono">{{ item.test_pct }}%</span>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title">Classification Report per Kelas</h2>
+          <p class="card-desc">
+            Ringkasan Precision, Recall, F1-Score, dan jumlah data uji (Support) untuk keempat kategori harga.
+          </p>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Kelas</th>
+                  <th>Precision</th>
+                  <th>Recall</th>
+                  <th>F1-Score</th>
+                  <th>Support</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in data_evaluasi.classification_report_rows %}
+                <tr>
+                  <td class="row-head">{{ row.kelas }}</td>
+                  <td class="mono">{{ row.precision }}</td>
+                  <td class="mono">{{ row.recall }}</td>
+                  <td class="mono">{{ row.f1_score }}</td>
+                  <td class="mono">{{ row.support }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card">
+          <h3 class="card-title">1. K-Nearest Neighbors (KNN)</h3>
+          <p class="card-desc" style="margin-bottom: 0;">
+            KNN mengklasifikasikan smartphone baru dengan mencari <strong>{{ data_evaluasi.best_k }} tetangga terdekat</strong> berdasarkan jarak Euclidean pada 6 fitur hardware, lalu mengambil suara mayoritas kelasnya. Penggunaan nilai k ganjil mencegah hasil seri saat pemungutan suara.
+          </p>
+        </div>
+        <div class="card">
+          <h3 class="card-title">2. StandardScaler dalam Pipeline</h3>
+          <p class="card-desc" style="margin-bottom: 0;">
+            Rentang fitur sangat berbeda (misalnya <code class="mono">ram</code> hingga 3998 MB dibanding kamera <code class="mono">pc</code> hingga 20 MP). <code class="mono">StandardScaler</code> menormalkan tiap fitur agar memiliki rata-rata 0 dan standar deviasi 1 sebelum jarak dihitung.
+          </p>
+        </div>
+      </div>
+      {% endif %}
+    </section>
+
+    <p class="footer-note">
+      Sumber Data: Kaggle &mdash; Mobile Price Classification (2.000 baris) &middot; Proyek Akhir Sistem Cerdas (TI24317)
+    </p>
+  </main>
+
+  <script>
+    (function () {
+      // 1. Sinkronisasi label nilai slider secara langsung saat digeser
+      const sliders = document.querySelectorAll('input[type="range"][data-target]');
+      sliders.forEach((slider) => {
+        const target = document.getElementById(slider.dataset.target);
+        const unit = slider.dataset.unit || "";
+        const sync = () => {
+          if (target) {
+            target.textContent = `${slider.value} ${unit}`.trim();
+          }
+        };
+        slider.addEventListener("input", sync);
+      });
+
+      // 2. Pengisian cepat 3 skenario uji kontras untuk mempermudah demo presentasi
+      const presets = {
+        low: { ram: 512, battery_power: 600, int_memory: 8, px_width: 640, px_height: 480, pc: 2 },
+        mid: { ram: 2048, battery_power: 1200, int_memory: 32, px_width: 1200, px_height: 720, pc: 10 },
+        high: { ram: 3800, battery_power: 1900, int_memory: 64, px_width: 1900, px_height: 1800, pc: 16 }
+      };
+
+      document.querySelectorAll(".preset-btn[data-preset]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const nilai = presets[btn.dataset.preset];
+          if (!nilai) return;
+          Object.entries(nilai).forEach(([name, val]) => {
+            const input = document.querySelector(`input[name="${name}"]`);
+            if (input) {
+              input.value = val;
+              input.dispatchEvent(new Event("input"));
+            }
+          });
+        });
+      });
+
+      // 3. Perpindahan antar tab Prediksi Harga dan Evaluasi Model tanpa reload
+      const tabButtons = document.querySelectorAll(".tab-btn[data-tab]");
+      const tabPanels = {
+        prediksi: document.getElementById("panel-prediksi"),
+        evaluasi: document.getElementById("panel-evaluasi")
+      };
+
+      tabButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const tab = btn.dataset.tab;
+          tabButtons.forEach((item) => {
+            const aktif = item.dataset.tab === tab;
+            item.classList.toggle("is-active", aktif);
+            item.setAttribute("aria-selected", aktif ? "true" : "false");
+          });
+          Object.entries(tabPanels).forEach(([nama, panel]) => {
+            if (panel) {
+              panel.classList.toggle("is-active", nama === tab);
+            }
+          });
+        });
+      });
+    })();
+  </script>
+</body>
+</html>
