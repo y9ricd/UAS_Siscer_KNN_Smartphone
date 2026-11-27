@@ -5,7 +5,7 @@ serta endpoint JSON `/api/predict/` untuk prediksi real-time.
 
 import json
 
-from django.http import JsonResponse
+from django.http import JsonResponse'
 from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST

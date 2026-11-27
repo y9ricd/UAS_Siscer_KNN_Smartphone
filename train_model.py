@@ -18,7 +18,6 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-# Gunakan path berbasis lokasi file skrip agar aman dijalankan dari direktori mana saja
 BASE_DIR = Path(__file__).resolve().parent
 DATASET_PATH = BASE_DIR / "mobile_price.csv"
 MODEL_PATH = BASE_DIR / "model_knn_smartphone.joblib"
