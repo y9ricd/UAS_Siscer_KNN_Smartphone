@@ -1,6 +1,7 @@
+django
+gunicorn
+whitenoise
 pandas
 scikit-learn
 joblib
-streamlit
 matplotlib
-django

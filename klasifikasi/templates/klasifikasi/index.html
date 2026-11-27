@@ -1,68 +1,65 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistem Klasifikasi Harga Smartphone (KNN) — Django</title>
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>Sistem Klasifikasi Harga Smartphone (KNN) · Django</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Fira+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'klasifikasi/styles.css' %}">
 </head>
 <body>
-  <main class="container">
-    <header class="hero-header">
-      <div class="brand-wrap">
-        <div class="brand-icon" aria-hidden="true">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <main class="page-shell">
+    <!-- Top Header -->
+    <header class="topbar">
+      <div class="brand-group">
+        <div class="brand-mark" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <rect x="6" y="2" width="12" height="20" rx="2"></rect>
             <line x1="12" y1="18" x2="12.01" y2="18"></line>
           </svg>
         </div>
         <div>
-          <h1 class="hero-title">Sistem Klasifikasi Rentang Harga Smartphone</h1>
-          <p class="hero-subtitle">
-            Proyek Akhir UAS Sistem Cerdas (TI24317) &middot; Django + KNN &amp; StandardScaler
+          <h1 class="page-title">Klasifikasi Harga Smartphone</h1>
+          <p class="page-subtitle">
+            Proyek Akhir UAS Sistem Cerdas (TI24317) &middot; Django + KNN Pipeline
           </p>
         </div>
       </div>
-      {% if data_evaluasi %}
-      <div class="header-badge mono">
-        <span class="header-badge-dot" aria-hidden="true"></span>
-        Model Aktif: KNN (k={{ data_evaluasi.best_k }}) &middot; Uji {{ data_evaluasi.test_accuracy }}%
+
+      <div class="topbar-actions">
+        {% if data_evaluasi %}
+        <span class="model-pill mono">
+          KNN k={{ data_evaluasi.best_k }} &middot; Uji {{ data_evaluasi.test_accuracy }}%
+        </span>
+        {% endif %}
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Ganti tema tampilan">
+          <span id="theme-icon" aria-hidden="true"></span>
+          <span id="theme-label">Mode Gelap</span>
+        </button>
       </div>
-      {% endif %}
     </header>
 
     {% if error_sistem %}
-    <div class="alert alert-error" role="alert">
-      <strong>Kesalahan Sistem:</strong> {{ error_sistem }}
+    <div class="error-banner" role="alert">
+      <strong>Perhatian:</strong> {{ error_sistem }}
     </div>
     {% endif %}
 
-    <nav class="tab-bar" role="tablist" aria-label="Menu Utama">
+    <!-- Main Navigation Tabs -->
+    <nav class="tab-nav" role="tablist" aria-label="Navigasi Utama">
       <button
         type="button"
-        id="tab-btn-prediksi"
-        class="tab-btn {% if tab_aktif == 'prediksi' %}is-active{% endif %}"
+        id="tab-btn-simulasi"
+        class="tab-btn {% if tab_aktif == 'simulasi' %}is-active{% endif %}"
         role="tab"
-        aria-selected="{% if tab_aktif == 'prediksi' %}true{% else %}false{% endif %}"
-        aria-controls="panel-prediksi"
-        data-tab="prediksi"
+        aria-selected="{% if tab_aktif == 'simulasi' %}true{% else %}false{% endif %}"
+        data-tab="simulasi"
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <line x1="4" y1="21" x2="4" y2="14"></line>
-          <line x1="4" y1="10" x2="4" y2="3"></line>
-          <line x1="12" y1="21" x2="12" y2="12"></line>
-          <line x1="12" y1="8" x2="12" y2="3"></line>
-          <line x1="20" y1="21" x2="20" y2="16"></line>
-          <line x1="20" y1="12" x2="20" y2="3"></line>
-          <line x1="1" y1="14" x2="7" y2="14"></line>
-          <line x1="9" y1="8" x2="15" y2="8"></line>
-          <line x1="17" y1="16" x2="23" y2="16"></line>
-        </svg>
-        Prediksi Harga
+        Simulasi Harga
       </button>
       <button
         type="button"
@@ -70,174 +67,141 @@
         class="tab-btn {% if tab_aktif == 'evaluasi' %}is-active{% endif %}"
         role="tab"
         aria-selected="{% if tab_aktif == 'evaluasi' %}true{% else %}false{% endif %}"
-        aria-controls="panel-evaluasi"
         data-tab="evaluasi"
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <path d="M3 3v18h18"></path>
-          <rect x="7" y="10" width="3" height="7"></rect>
-          <rect x="12" y="6" width="3" height="11"></rect>
-          <rect x="17" y="13" width="3" height="4"></rect>
-        </svg>
         Evaluasi Model
       </button>
     </nav>
 
-    <!-- TAB 1: PREDIKSI HARGA -->
+    <!-- TAB 1: SIMULASI HARGA -->
     <section
-      id="panel-prediksi"
-      class="tab-panel {% if tab_aktif == 'prediksi' %}is-active{% endif %}"
+      id="panel-simulasi"
+      class="tab-panel {% if tab_aktif == 'simulasi' %}is-active{% endif %}"
       role="tabpanel"
-      aria-labelledby="tab-btn-prediksi"
+      aria-labelledby="tab-btn-simulasi"
     >
-      <div class="card">
-        <h2 class="card-title">Simulasi Prediksi Kategori Harga Smartphone</h2>
-        <p class="card-desc">
-          Sesuaikan 6 spesifikasi hardware di bawah ini sesuai rentang dataset, atau pilih salah satu skenario uji cepat, lalu klik tombol <strong>Prediksi Kategori Harga</strong>.
-        </p>
-
-        <div class="preset-bar">
-          <span class="preset-label">Skenario Uji Cepat:</span>
-          <button type="button" class="preset-btn" data-preset="low">Spek Rendah (Murah)</button>
-          <button type="button" class="preset-btn" data-preset="mid">Spek Menengah</button>
-          <button type="button" class="preset-btn" data-preset="high">Spek Tinggi (Flagship)</button>
-        </div>
-
-        <form method="post" action="{% url 'beranda' %}">
-          {% csrf_token %}
-          <div class="grid-2">
-            <div class="group-box">
-              <h3 class="group-heading">Performa &amp; Penyimpanan</h3>
-              {% for s in slider_performa %}
-              <div class="slider-item">
-                <div class="slider-top">
-                  <label class="slider-label" for="{{ s.id_for_label }}">{{ s.label }}</label>
-                  <span class="slider-value mono" id="val-{{ s.name }}">{{ s.value }} {{ s.unit }}</span>
-                </div>
-                <input
-                  type="range"
-                  name="{{ s.name }}"
-                  id="{{ s.id_for_label }}"
-                  min="{{ s.min }}"
-                  max="{{ s.max }}"
-                  step="{{ s.step }}"
-                  value="{{ s.value }}"
-                  data-unit="{{ s.unit }}"
-                  data-target="val-{{ s.name }}"
-                >
-                <p class="slider-help">{{ s.help_text }}</p>
-                {% if s.errors %}
-                <p class="field-error">{{ s.errors|join:", " }}</p>
-                {% endif %}
-              </div>
-              {% endfor %}
+      <div class="simulasi-grid">
+        <!-- Panel Kontrol Spesifikasi -->
+        <section class="bento-card" aria-label="Panel Kontrol Spesifikasi">
+          <div class="card-head">
+            <div>
+              <h2 class="card-title">Spesifikasi Hardware</h2>
+              <p class="card-desc">Pilih preset cepat atau geser slider untuk simulasi real-time.</p>
             </div>
+            <button type="button" id="btn-reset" class="reset-btn">Reset</button>
+          </div>
 
-            <div class="group-box">
-              <h3 class="group-heading">Layar &amp; Kamera</h3>
-              {% for s in slider_layar %}
-              <div class="slider-item">
-                <div class="slider-top">
-                  <label class="slider-label" for="{{ s.id_for_label }}">{{ s.label }}</label>
-                  <span class="slider-value mono" id="val-{{ s.name }}">{{ s.value }} {{ s.unit }}</span>
-                </div>
-                <input
-                  type="range"
-                  name="{{ s.name }}"
-                  id="{{ s.id_for_label }}"
-                  min="{{ s.min }}"
-                  max="{{ s.max }}"
-                  step="{{ s.step }}"
-                  value="{{ s.value }}"
-                  data-unit="{{ s.unit }}"
-                  data-target="val-{{ s.name }}"
-                >
-                <p class="slider-help">{{ s.help_text }}</p>
-                {% if s.errors %}
-                <p class="field-error">{{ s.errors|join:", " }}</p>
-                {% endif %}
+          <div class="preset-row" role="group" aria-label="Preset Spesifikasi Cepat">
+            <button type="button" class="preset-btn" data-preset="Entry-Level">Entry-Level</button>
+            <button type="button" class="preset-btn is-active" data-preset="Mid-Range">Mid-Range</button>
+            <button type="button" class="preset-btn" data-preset="Flagship">Flagship</button>
+          </div>
+
+          <div class="slider-list">
+            {% for s in daftar_slider %}
+            <div class="slider-box">
+              <div class="slider-top">
+                <label class="slider-label" for="slider-{{ s.name }}">{{ s.label }}</label>
+                <span class="slider-val mono" id="val-{{ s.name }}">{{ s.value }} {{ s.unit }}</span>
               </div>
-              {% endfor %}
-            </div>
-          </div>
-
-          <button type="submit" class="btn-primary">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-            </svg>
-            Prediksi Kategori Harga
-          </button>
-        </form>
-      </div>
-
-      {% if hasil_prediksi %}
-      <div class="card" aria-live="polite">
-        <div class="alert alert-success">
-          Prediksi selesai: Smartphone masuk ke kategori <strong>{{ hasil_prediksi.nama }} (Kelas {{ hasil_prediksi.kelas }})</strong>.
-        </div>
-
-        <div class="grid-4" style="grid-template-columns: repeat(3, minmax(0, 1fr));">
-          <div class="metric-card is-highlight">
-            <div class="metric-label">Kategori Harga</div>
-            <div class="metric-value">{{ hasil_prediksi.nama }}</div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-label">Label Kelas Target</div>
-            <div class="metric-value mono">Kelas {{ hasil_prediksi.kelas }}</div>
-          </div>
-          <div class="metric-card">
-            <div class="metric-label">Probabilitas Kelas Terpilih</div>
-            <div class="metric-value mono">{{ hasil_prediksi.keyakinan }}%</div>
-          </div>
-        </div>
-
-        <div class="alert alert-info">
-          <strong>Kisaran Harga Ilustratif:</strong> {{ hasil_prediksi.kisaran }} &mdash; {{ hasil_prediksi.deskripsi }}
-          <br>
-          <small>Catatan: Dataset asli menggunakan label kelas relatif 0&ndash;3, sehingga nominal Rupiah di atas bersifat ilustratif.</small>
-        </div>
-
-        <h3 class="card-title" style="font-size: 1.02rem; margin-bottom: 14px;">Distribusi Probabilitas 4 Kelas Harga</h3>
-        <div class="grid-2" style="align-items: start;">
-          <div class="prob-list">
-            {% for item in hasil_prediksi.probabilitas_kelas %}
-            <div class="prob-row">
-              <div class="prob-name">{{ item.kelas }} &ndash; {{ item.nama }}</div>
-              <div class="prob-track" aria-hidden="true">
-                <div class="prob-fill {% if item.terpilih %}is-selected{% endif %}" style="width: {{ item.persen }}%;"></div>
+              <input
+                type="range"
+                id="slider-{{ s.name }}"
+                name="{{ s.name }}"
+                min="{{ s.min }}"
+                max="{{ s.max }}"
+                step="{{ s.step }}"
+                value="{{ s.value }}"
+                data-unit="{{ s.unit }}"
+              >
+              <div class="slider-range-hint mono">
+                <span>{{ s.min }} {{ s.unit }}</span>
+                <span>{{ s.max }} {{ s.unit }}</span>
               </div>
-              <div class="prob-pct mono">{{ item.persen }}%</div>
             </div>
             {% endfor %}
           </div>
+        </section>
 
-          <div class="table-wrap">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Kelas</th>
-                  <th>Kategori</th>
-                  <th>Probabilitas</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for item in hasil_prediksi.probabilitas_kelas %}
-                <tr class="{% if item.terpilih %}row-selected{% endif %}">
-                  <td class="mono">{{ item.kelas }}</td>
-                  <td>{{ item.nama }}</td>
-                  <td class="mono">{{ item.persen }}%</td>
-                </tr>
+        <!-- Panel Hasil Real-Time -->
+        <div class="result-stack">
+          <div id="api-error" class="error-banner" style="display: none;" role="alert"></div>
+
+          <section class="bento-card" aria-live="polite" aria-label="Hasil Klasifikasi Real-Time">
+            <div class="card-head">
+              <div>
+                <h2 class="card-title">Hasil Prediksi Harga</h2>
+                <p class="card-desc">Dihitung otomatis melalui endpoint <code class="mono">/api/predict/</code>.</p>
+              </div>
+              <span id="live-status" class="status-badge">Real-time aktif</span>
+            </div>
+
+            <div class="kpi-bento">
+              <div class="kpi-tile is-hero">
+                <div class="kpi-label">Kategori Harga</div>
+                <div class="kpi-value" id="res-nama">{% if hasil_awal %}{{ hasil_awal.nama }}{% else %}-{% endif %}</div>
+                <div class="kpi-sub">Output Klasifikasi KNN</div>
+              </div>
+              <div class="kpi-tile">
+                <div class="kpi-label">Label Kelas</div>
+                <div class="kpi-value mono" id="res-kelas">{% if hasil_awal %}Kelas {{ hasil_awal.kelas }}{% else %}-{% endif %}</div>
+                <div class="kpi-sub">Rentang target 0&ndash;3</div>
+              </div>
+              <div class="kpi-tile">
+                <div class="kpi-label">Tingkat Keyakinan</div>
+                <div class="kpi-value mono" id="res-keyakinan">{% if hasil_awal %}{{ hasil_awal.keyakinan }}%{% else %}-{% endif %}</div>
+                <div class="kpi-sub">Suara tetangga terdekat</div>
+              </div>
+            </div>
+
+            <div class="price-banner">
+              <div>
+                <div class="price-banner-title">Kisaran Harga Ilustratif</div>
+                <div class="price-banner-range" id="res-kisaran">{% if hasil_awal %}{{ hasil_awal.kisaran }}{% else %}-{% endif %}</div>
+                <p class="price-banner-desc" id="res-deskripsi">{% if hasil_awal %}{{ hasil_awal.deskripsi }}{% endif %}</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="bento-card" aria-label="Distribusi Probabilitas 4 Kelas">
+            <div class="card-head">
+              <div>
+                <h2 class="card-title">Distribusi Probabilitas 4 Kelas</h2>
+                <p class="card-desc">Proporsi suara dari k tetangga terdekat pada tiap kategori harga.</p>
+              </div>
+            </div>
+
+            <div class="prob-list" id="prob-bars">
+              {% if hasil_awal %}
+                {% for item in hasil_awal.probabilitas_kelas %}
+                <div class="prob-row {% if item.terpilih %}is-selected{% endif %}">
+                  <div class="prob-name">{{ item.kelas }} &middot; {{ item.nama }}</div>
+                  <div class="prob-track" aria-hidden="true">
+                    <div class="prob-fill" style="width: {{ item.persen }}%;"></div>
+                  </div>
+                  <div class="prob-pct mono">{{ item.persen }}%</div>
+                </div>
                 {% endfor %}
-              </tbody>
-            </table>
-          </div>
+              {% endif %}
+            </div>
+          </section>
+
+          <section class="bento-card" aria-label="Ringkasan Analisis Kontekstual">
+            <div class="card-head" style="margin-bottom: 10px;">
+              <div>
+                <h2 class="card-title">Ringkasan Analisis</h2>
+              </div>
+            </div>
+            <ul class="analysis-list" id="res-analisis">
+              {% if hasil_awal %}
+                {% for poin in hasil_awal.ringkasan_analisis %}
+                <li>{{ poin }}</li>
+                {% endfor %}
+              {% endif %}
+            </ul>
+          </section>
         </div>
       </div>
-      {% else %}
-      <div class="alert alert-info">
-        Atur 6 slider spesifikasi hardware di atas, lalu klik <strong>Prediksi Kategori Harga</strong> untuk melihat hasil klasifikasi dan grafik probabilitas 4 kelas.
-      </div>
-      {% endif %}
     </section>
 
     <!-- TAB 2: EVALUASI MODEL -->
@@ -248,91 +212,112 @@
       aria-labelledby="tab-btn-evaluasi"
     >
       {% if data_evaluasi %}
-      <div class="grid-4">
-        <div class="metric-card">
-          <div class="metric-label">Akurasi Data Latih</div>
-          <div class="metric-value mono">{{ data_evaluasi.train_accuracy }}%</div>
+      <div class="eval-kpi-grid">
+        <div class="bento-card">
+          <div class="kpi-label">Akurasi Data Latih</div>
+          <div class="kpi-value mono">{{ data_evaluasi.train_accuracy }}%</div>
+          <div class="kpi-sub">{{ data_evaluasi.train_rows }} data latih (75%)</div>
         </div>
-        <div class="metric-card is-highlight">
-          <div class="metric-label">Akurasi Data Uji</div>
-          <div class="metric-value mono">{{ data_evaluasi.test_accuracy }}%</div>
+        <div class="bento-card">
+          <div class="kpi-label">Akurasi Data Uji</div>
+          <div class="kpi-value mono" style="color: var(--accent-primary);">{{ data_evaluasi.test_accuracy }}%</div>
+          <div class="kpi-sub">{{ data_evaluasi.test_rows }} data uji (25%)</div>
         </div>
-        <div class="metric-card">
-          <div class="metric-label">Selisih Latih vs Uji</div>
-          <div class="metric-value mono">{{ data_evaluasi.gap }}%</div>
+        <div class="bento-card">
+          <div class="kpi-label">Selisih Latih vs Uji</div>
+          <div class="kpi-value mono">{{ data_evaluasi.gap }}%</div>
+          <div class="kpi-sub">
+            {% if data_evaluasi.status_stabil %}
+            <span class="status-badge is-highlight">Stabil (Tidak Overfitting)</span>
+            {% else %}
+            <span class="status-badge">Perlu Penyesuaian k</span>
+            {% endif %}
+          </div>
         </div>
-        <div class="metric-card">
-          <div class="metric-label">Nilai k Terpilih</div>
-          <div class="metric-value mono">k = {{ data_evaluasi.best_k }}</div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h2 class="card-title">Confusion Matrix Data Uji ({{ data_evaluasi.test_rows }} Data)</h2>
-        <p class="card-desc">
-          Pembagian data menggunakan stratified split: {{ data_evaluasi.train_rows }} data latih (75%) dan {{ data_evaluasi.test_rows }} data uji (25%) dari total {{ data_evaluasi.dataset_rows }} baris dataset. Sel diagonal berwarna biru tua menunjukkan prediksi tepat.
-        </p>
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Aktual \ Prediksi</th>
-                {% for lbl in data_evaluasi.label_kelas %}
-                <th>{{ lbl }}</th>
-                {% endfor %}
-              </tr>
-            </thead>
-            <tbody>
-              {% for baris in data_evaluasi.confusion_matrix_rows %}
-              <tr>
-                <td class="row-head">{{ baris.label }}</td>
-                {% for sel in baris.sel %}
-                <td class="mono cm-lv-{{ sel.level }}">{{ sel.nilai }}</td>
-                {% endfor %}
-              </tr>
-              {% endfor %}
-            </tbody>
-          </table>
+        <div class="bento-card">
+          <div class="kpi-label">Nilai k Terbaik</div>
+          <div class="kpi-value mono">k = {{ data_evaluasi.best_k }}</div>
+          <div class="kpi-sub">Dari uji k = 3, 5, 7, 9, 11</div>
         </div>
       </div>
 
-      <div class="grid-2">
-        <div class="card">
-          <h2 class="card-title">Eksperimen Nilai k Ganjil (3, 5, 7, 9, 11)</h2>
-          <p class="card-desc">
-            Membandingkan akurasi latih dan akurasi uji untuk memilih nilai k yang optimal tanpa overfitting.
-          </p>
-          <div class="k-chart-list">
+      <div class="eval-bento-row">
+        <section class="bento-card">
+          <div class="card-head">
+            <div>
+              <h2 class="card-title">Confusion Matrix (4&times;4 Data Uji)</h2>
+              <p class="card-desc">Baris menunjukkan label aktual dan kolom menunjukkan prediksi model pada {{ data_evaluasi.test_rows }} data uji.</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table class="bento-table">
+              <thead>
+                <tr>
+                  <th>Aktual \ Prediksi</th>
+                  {% for lbl in data_evaluasi.label_kelas %}
+                  <th>{{ lbl }}</th>
+                  {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+                {% for baris in data_evaluasi.confusion_matrix_rows %}
+                <tr>
+                  <td class="row-head">{{ baris.label }}</td>
+                  {% for sel in baris.sel %}
+                  <td class="mono cm-cell cm-lv-{{ sel.level }}">{{ sel.nilai }}</td>
+                  {% endfor %}
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="bento-card">
+          <div class="card-head">
+            <div>
+              <h2 class="card-title">Eksperimen Nilai k Ganjil</h2>
+              <p class="card-desc">Perbandingan akurasi latih (abu-abu) vs akurasi uji (biru) untuk mencegah overfitting.</p>
+            </div>
+          </div>
+          <div class="k-list">
             {% for item in data_evaluasi.k_experiment %}
-            <div class="k-chart-item {% if item.terpilih %}is-best{% endif %}">
-              <div class="k-chart-head">
-                <span class="mono">k = {{ item.k }} {% if item.terpilih %}<span class="badge-pill">Terpilih</span>{% endif %}</span>
-                <span class="mono">Selisih: {{ item.gap_pct }}%</span>
+            <div class="k-item {% if item.terpilih %}is-best{% endif %}">
+              <div class="k-item-head">
+                <span class="mono">
+                  k = {{ item.k }}
+                  {% if item.terpilih %}<span class="status-badge is-highlight">Terpilih</span>{% endif %}
+                </span>
+                <span class="mono" style="color: var(--text-secondary);">Selisih {{ item.gap_pct }}%</span>
               </div>
-              <div class="k-bar-stack">
-                <div class="k-bar-row">
+              <div class="k-bars">
+                <div class="k-bar-line">
                   <span>Latih</span>
-                  <div class="k-bar-track"><div class="k-bar-train" style="width: {{ item.train_pct }}%;"></div></div>
+                  <div class="k-track"><div class="k-fill-train" style="width: {{ item.train_pct }}%;"></div></div>
                   <span class="mono">{{ item.train_pct }}%</span>
                 </div>
-                <div class="k-bar-row">
+                <div class="k-bar-line">
                   <span>Uji</span>
-                  <div class="k-bar-track"><div class="k-bar-test" style="width: {{ item.test_pct }}%;"></div></div>
+                  <div class="k-track"><div class="k-fill-test" style="width: {{ item.test_pct }}%;"></div></div>
                   <span class="mono">{{ item.test_pct }}%</span>
                 </div>
               </div>
             </div>
             {% endfor %}
           </div>
-        </div>
+        </section>
+      </div>
 
-        <div class="card">
-          <h2 class="card-title">Classification Report per Kelas</h2>
-          <p class="card-desc">
-            Ringkasan Precision, Recall, F1-Score, dan jumlah data uji (Support) untuk keempat kategori harga.
-          </p>
+      <div class="pipeline-grid">
+        <section class="bento-card">
+          <div class="card-head">
+            <div>
+              <h2 class="card-title">Classification Report per Kelas</h2>
+              <p class="card-desc">Presisi, Recall, dan F1-Score aktual pada 500 data uji.</p>
+            </div>
+          </div>
           <div class="table-wrap">
-            <table class="data-table">
+            <table class="bento-table">
               <thead>
                 <tr>
                   <th>Kelas</th>
@@ -355,88 +340,245 @@
               </tbody>
             </table>
           </div>
-        </div>
-      </div>
+        </section>
 
-      <div class="grid-2">
-        <div class="card">
-          <h3 class="card-title">1. K-Nearest Neighbors (KNN)</h3>
-          <p class="card-desc" style="margin-bottom: 0;">
-            KNN mengklasifikasikan smartphone baru dengan mencari <strong>{{ data_evaluasi.best_k }} tetangga terdekat</strong> berdasarkan jarak Euclidean pada 6 fitur hardware, lalu mengambil suara mayoritas kelasnya. Penggunaan nilai k ganjil mencegah hasil seri saat pemungutan suara.
-          </p>
-        </div>
-        <div class="card">
-          <h3 class="card-title">2. StandardScaler dalam Pipeline</h3>
-          <p class="card-desc" style="margin-bottom: 0;">
-            Rentang fitur sangat berbeda (misalnya <code class="mono">ram</code> hingga 3998 MB dibanding kamera <code class="mono">pc</code> hingga 20 MP). <code class="mono">StandardScaler</code> menormalkan tiap fitur agar memiliki rata-rata 0 dan standar deviasi 1 sebelum jarak dihitung.
-          </p>
-        </div>
+        <section class="bento-card">
+          <div class="card-head">
+            <div>
+              <h2 class="card-title">Alur Pipeline: StandardScaler + KNN</h2>
+              <p class="card-desc">Ringkasan arsitektur Machine Learning untuk pencegahan data leakage.</p>
+            </div>
+          </div>
+          <ul class="analysis-list">
+            <li>
+              <strong>1. Pembagian Stratified (75% / 25%):</strong> Memisahkan 1.500 data latih dan 500 data uji secara seimbang (125 data per kelas pada data uji).
+            </li>
+            <li>
+              <strong>2. StandardScaler di dalam Pipeline:</strong> Parameter skala (mean &amp; standar deviasi) hanya dipelajari dari data latih agar tidak terjadi kebocoran informasi dari data uji.
+            </li>
+            <li>
+              <strong>3. KNeighborsClassifier (k = {{ data_evaluasi.best_k }}):</strong> Menentukan kategori smartphone baru dari suara mayoritas {{ data_evaluasi.best_k }} tetangga terdekat berdasarkan jarak Euclidean 6 fitur hardware.
+            </li>
+          </ul>
+        </section>
       </div>
       {% endif %}
     </section>
 
     <p class="footer-note">
-      Sumber Data: Kaggle &mdash; Mobile Price Classification (2.000 baris) &middot; Proyek Akhir Sistem Cerdas (TI24317)
+      Dataset: Kaggle &mdash; Mobile Price Classification (2.000 baris) &middot; Proyek Akhir Sistem Cerdas (TI24317)
     </p>
   </main>
 
   <script>
     (function () {
-      // 1. Sinkronisasi label nilai slider secara langsung saat digeser
-      const sliders = document.querySelectorAll('input[type="range"][data-target]');
-      sliders.forEach((slider) => {
-        const target = document.getElementById(slider.dataset.target);
-        const unit = slider.dataset.unit || "";
-        const sync = () => {
-          if (target) {
-            target.textContent = `${slider.value} ${unit}`.trim();
-          }
-        };
-        slider.addEventListener("input", sync);
+      const PRESETS = {{ preset_json|safe }};
+      const RESET_VALUES = {{ nilai_reset_json|safe }};
+      const PREDICT_URL = "{% url 'api_predict' %}";
+
+      // 1. Toggle Light / Dark Mode dengan penyimpanan preferensi di localStorage
+      const rootEl = document.documentElement;
+      const themeBtn = document.getElementById("theme-toggle");
+      const themeIcon = document.getElementById("theme-icon");
+      const themeLabel = document.getElementById("theme-label");
+
+      const svgSun = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>';
+      const svgMoon = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>';
+
+      function terapkanTema(tema) {
+        rootEl.setAttribute("data-theme", tema);
+        localStorage.setItem("smartprice_theme", tema);
+        if (tema === "dark") {
+          themeIcon.innerHTML = svgSun;
+          themeLabel.textContent = "Mode Terang";
+        } else {
+          themeIcon.innerHTML = svgMoon;
+          themeLabel.textContent = "Mode Gelap";
+        }
+      }
+
+      terapkanTema(localStorage.getItem("smartprice_theme") || "light");
+      themeBtn.addEventListener("click", () => {
+        const saatIni = rootEl.getAttribute("data-theme");
+        terapkanTema(saatIni === "dark" ? "light" : "dark");
       });
 
-      // 2. Pengisian cepat 3 skenario uji kontras untuk mempermudah demo presentasi
-      const presets = {
-        low: { ram: 512, battery_power: 600, int_memory: 8, px_width: 640, px_height: 480, pc: 2 },
-        mid: { ram: 2048, battery_power: 1200, int_memory: 32, px_width: 1200, px_height: 720, pc: 10 },
-        high: { ram: 3800, battery_power: 1900, int_memory: 64, px_width: 1900, px_height: 1800, pc: 16 }
-      };
-
-      document.querySelectorAll(".preset-btn[data-preset]").forEach((btn) => {
-        btn.addEventListener("click", () => {
-          const nilai = presets[btn.dataset.preset];
-          if (!nilai) return;
-          Object.entries(nilai).forEach(([name, val]) => {
-            const input = document.querySelector(`input[name="${name}"]`);
-            if (input) {
-              input.value = val;
-              input.dispatchEvent(new Event("input"));
-            }
-          });
-        });
-      });
-
-      // 3. Perpindahan antar tab Prediksi Harga dan Evaluasi Model tanpa reload
+      // 2. Navigasi Tab (Simulasi Harga & Evaluasi Model)
       const tabButtons = document.querySelectorAll(".tab-btn[data-tab]");
       const tabPanels = {
-        prediksi: document.getElementById("panel-prediksi"),
+        simulasi: document.getElementById("panel-simulasi"),
         evaluasi: document.getElementById("panel-evaluasi")
       };
 
       tabButtons.forEach((btn) => {
         btn.addEventListener("click", () => {
           const tab = btn.dataset.tab;
-          tabButtons.forEach((item) => {
-            const aktif = item.dataset.tab === tab;
-            item.classList.toggle("is-active", aktif);
-            item.setAttribute("aria-selected", aktif ? "true" : "false");
+          tabButtons.forEach((b) => {
+            const aktif = b.dataset.tab === tab;
+            b.classList.toggle("is-active", aktif);
+            b.setAttribute("aria-selected", aktif ? "true" : "false");
           });
-          Object.entries(tabPanels).forEach(([nama, panel]) => {
-            if (panel) {
-              panel.classList.toggle("is-active", nama === tab);
-            }
+          Object.entries(tabPanels).forEach(([k, panel]) => {
+            if (panel) panel.classList.toggle("is-active", k === tab);
           });
         });
+      });
+
+      // 3. Helper CSRF Token dari meta tag atau cookie
+      function ambilCsrfToken() {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        if (meta && meta.content) return meta.content;
+        const match = document.cookie.match(/csrftoken=([^;]+)/);
+        return match ? decodeURIComponent(match[1]) : "";
+      }
+
+      // 4. Sinkronisasi slider & pemanggilan real-time ke POST /api/predict/
+      const sliders = Array.from(document.querySelectorAll('.slider-list input[type="range"]'));
+      const presetButtons = Array.from(document.querySelectorAll(".preset-btn[data-preset]"));
+      const resetBtn = document.getElementById("btn-reset");
+      const liveStatus = document.getElementById("live-status");
+      const apiError = document.getElementById("api-error");
+
+      function perbaruiLabelSlider(slider) {
+        const valEl = document.getElementById(`val-${slider.name}`);
+        if (valEl) {
+          valEl.textContent = `${slider.value} ${slider.dataset.unit || ""}`.trim();
+        }
+      }
+
+      function kumpulkanPayload() {
+        const payload = {};
+        sliders.forEach((s) => {
+          payload[s.name] = Number(s.value);
+        });
+        return payload;
+      }
+
+      function renderHasilPrediksi(data) {
+        document.getElementById("res-nama").textContent = data.nama;
+        document.getElementById("res-kelas").textContent = `Kelas ${data.kelas}`;
+        document.getElementById("res-keyakinan").textContent = `${data.keyakinan}%`;
+        document.getElementById("res-kisaran").textContent = data.kisaran;
+        document.getElementById("res-deskripsi").textContent = data.deskripsi;
+
+        const probContainer = document.getElementById("prob-bars");
+        probContainer.innerHTML = "";
+        data.probabilitas_kelas.forEach((item) => {
+          const row = document.createElement("div");
+          row.className = `prob-row${item.terpilih ? " is-selected" : ""}`;
+
+          const nameDiv = document.createElement("div");
+          nameDiv.className = "prob-name";
+          nameDiv.textContent = `${item.kelas} · ${item.nama}`;
+
+          const trackDiv = document.createElement("div");
+          trackDiv.className = "prob-track";
+          trackDiv.setAttribute("aria-hidden", "true");
+
+          const fillDiv = document.createElement("div");
+          fillDiv.className = "prob-fill";
+          fillDiv.style.width = `${item.persen}%`;
+          trackDiv.appendChild(fillDiv);
+
+          const pctDiv = document.createElement("div");
+          pctDiv.className = "prob-pct mono";
+          pctDiv.textContent = `${item.persen}%`;
+
+          row.appendChild(nameDiv);
+          row.appendChild(trackDiv);
+          row.appendChild(pctDiv);
+          probContainer.appendChild(row);
+        });
+
+        const analisisEl = document.getElementById("res-analisis");
+        analisisEl.innerHTML = "";
+        (data.ringkasan_analisis || []).forEach((teks) => {
+          const li = document.createElement("li");
+          li.textContent = teks;
+          analisisEl.appendChild(li);
+        });
+      }
+
+      let debounceTimer = null;
+      let requestController = null;
+
+      async function jalankanPrediksi() {
+        if (requestController) {
+          requestController.abort();
+        }
+        requestController = new AbortController();
+        liveStatus.textContent = "Menghitung...";
+        apiError.style.display = "none";
+
+        try {
+          const res = await fetch(PREDICT_URL, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-CSRFToken": ambilCsrfToken()
+            },
+            body: JSON.stringify(kumpulkanPayload()),
+            signal: requestController.signal
+          });
+          const data = await res.json();
+          if (!res.ok) {
+            apiError.textContent = data.error || "Terjadi kesalahan validasi input.";
+            apiError.style.display = "block";
+            liveStatus.textContent = "Input tidak valid";
+            return;
+          }
+          renderHasilPrediksi(data);
+          liveStatus.textContent = "Real-time aktif";
+        } catch (err) {
+          if (err.name !== "AbortError") {
+            apiError.textContent = "Gagal menghubungi endpoint /api/predict/.";
+            apiError.style.display = "block";
+            liveStatus.textContent = "Koneksi gagal";
+          }
+        }
+      }
+
+      function jadwalkanPrediksi(segera) {
+        clearTimeout(debounceTimer);
+        if (segera) {
+          jalankanPrediksi();
+        } else {
+          debounceTimer = setTimeout(jalankanPrediksi, 75);
+        }
+      }
+
+      sliders.forEach((slider) => {
+        slider.addEventListener("input", () => {
+          perbaruiLabelSlider(slider);
+          presetButtons.forEach((b) => b.classList.remove("is-active"));
+          jadwalkanPrediksi(false);
+        });
+      });
+
+      presetButtons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const nilai = PRESETS[btn.dataset.preset];
+          if (!nilai) return;
+          presetButtons.forEach((b) => b.classList.toggle("is-active", b === btn));
+          sliders.forEach((s) => {
+            if (Object.prototype.hasOwnProperty.call(nilai, s.name)) {
+              s.value = nilai[s.name];
+              perbaruiLabelSlider(s);
+            }
+          });
+          jadwalkanPrediksi(true);
+        });
+      });
+
+      resetBtn.addEventListener("click", () => {
+        presetButtons.forEach((b) => b.classList.remove("is-active"));
+        sliders.forEach((s) => {
+          if (Object.prototype.hasOwnProperty.call(RESET_VALUES, s.name)) {
+            s.value = RESET_VALUES[s.name];
+            perbaruiLabelSlider(s);
+          }
+        });
+        jadwalkanPrediksi(true);
       });
     })();
   </script>

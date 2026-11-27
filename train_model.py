@@ -18,10 +18,11 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-# Konstanta konfigurasi proyek agar mudah dibaca dan dipelihara
-DATASET_PATH = Path("mobile_price.csv")
-MODEL_PATH = Path("model_knn_smartphone.joblib")
-METRICS_PATH = Path("metrics_summary.json")
+# Gunakan path berbasis lokasi file skrip agar aman dijalankan dari direktori mana saja
+BASE_DIR = Path(__file__).resolve().parent
+DATASET_PATH = BASE_DIR / "mobile_price.csv"
+MODEL_PATH = BASE_DIR / "model_knn_smartphone.joblib"
+METRICS_PATH = BASE_DIR / "metrics_summary.json"
 
 # 6 fitur hardware utama yang digunakan sebagai input model
 FITUR_UTAMA = [
@@ -58,7 +59,7 @@ def muat_dan_periksa_data(path_csv: Path) -> pd.DataFrame:
     print("=" * 60)
     print(f"Jumlah baris & kolom : {df.shape[0]} baris, {df.shape[1]} kolom")
 
-    # Cek apakah ada nilai kosong (missing values) pada fitur dan target
+    # Cek apakah ada nilai kosong (missing values) pada 6 fitur utama dan target
     kolom_dicek = FITUR_UTAMA + [TARGET_KOLOM]
     jumlah_kosong = df[kolom_dicek].isnull().sum()
     print("\nPengecekan data kosong (missing values) pada fitur & target:")
@@ -75,9 +76,9 @@ def muat_dan_periksa_data(path_csv: Path) -> pd.DataFrame:
 
 
 def buat_pipeline_knn(nilai_k: int) -> Pipeline:
-    """Membuat Pipeline yang menggabungkan StandardScaler dan KNeighborsClassifier."""
-    # StandardScaler menyamakan skala fitur (mis. RAM ribuan vs kamera puluhan)
-    # sebelum jarak Euclidean dihitung oleh KNN
+    """Membuat Pipeline StandardScaler + KNeighborsClassifier untuk mencegah data leakage."""
+    # StandardScaler dipasang di dalam Pipeline agar rata-rata dan standar deviasi
+    # hanya dihitung dari data latih saat fit(), lalu diterapkan konsisten saat prediksi
     return Pipeline(
         steps=[
             ("scaler", StandardScaler()),
@@ -122,7 +123,7 @@ def eksperimen_nilai_k(
             }
         )
 
-    # Pilih k dengan akurasi uji tertinggi; jika seri, utamakan k=7 atau selisih terkecil
+    # Pilih k dengan akurasi uji tertinggi; jika seri, utamakan selisih latih-uji terkecil
     terbaik = max(
         hasil_eksperimen,
         key=lambda item: (item["test_accuracy"], -item["gap"], item["k"] == K_DEFAULT),
@@ -143,7 +144,7 @@ def latih_dan_evaluasi_model(
     y_test: pd.Series,
     nilai_k: int,
 ) -> tuple[Pipeline, dict]:
-    """Melatih model KNN final dan menghitung metrik evaluasi lengkap."""
+    """Melatih model KNN final dan menghitung akurasi, confusion matrix, dan report."""
     model = buat_pipeline_knn(nilai_k)
     model.fit(X_train, y_train)
 
@@ -183,7 +184,7 @@ def latih_dan_evaluasi_model(
 
 
 def hitung_statistik_fitur(df: pd.DataFrame) -> dict:
-    """Mengambil nilai min, max, dan median setiap fitur untuk slider aplikasi web."""
+    """Mengambil nilai min, max, dan median tiap fitur untuk batas validasi dan slider web."""
     rentang = {}
     for fitur in FITUR_UTAMA:
         rentang[fitur] = {
@@ -219,21 +220,12 @@ def main() -> None:
         X_train, X_test, y_train, y_test, DAFTAR_K
     )
 
-    # 4. Latih dan evaluasi model terbaik (cek selisih latih-uji dengan k=7 terlebih dahulu)
-    # Catatan: jika k=7 memiliki performa uji terbaik atau seimbang, pakai k=7;
-    # jika ada k lain yang lebih baik tanpa overfitting, pakai k_terbaik dari eksperimen.
-    hasil_k7 = next((item for item in hasil_k if item["k"] == K_DEFAULT), None)
-    k_final = K_DEFAULT
-    if hasil_k7 is not None and k_terbaik != K_DEFAULT:
-        # Gunakan k terbaik hasil eksperimen apabila akurasi ujinya lebih tinggi
-        # atau selisih latih-ujinya lebih sehat
-        k_final = k_terbaik
-
+    # 4. Latih dan evaluasi model terbaik berdasarkan hasil eksperimen
     model_final, metrik_final = latih_dan_evaluasi_model(
-        X_train, X_test, y_train, y_test, k_final
+        X_train, X_test, y_train, y_test, k_terbaik
     )
 
-    # 5. Lengkapi ringkasan metrik dan simpan model + JSON ke disk
+    # 5. Lengkapi ringkasan metrik dan simpan artefak model + JSON ke disk
     ringkasan_json = {
         **metrik_final,
         "feature_names": FITUR_UTAMA,
