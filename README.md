@@ -1,5 +1,5 @@
 # Sistem Klasifikasi Rentang Harga Smartphone Berdasarkan Spesifikasi Hardware Berbasis Machine Learning (KNN)
-
+## Akses Aplikasi Web saya Langsung : https://abdulfarid13.pythonanywhere.com/
 ## Masalah yang diselesaikan
 
 Menentukan kategori harga smartphone secara objektif dari spesifikasi perangkat keras sering kali membingungkan bagi calon pembeli maupun penjual karena banyaknya kombinasi komponen (RAM, baterai, memori internal, resolusi layar, dan kamera). Proyek ini membangun aplikasi web berbasis Django yang mengklasifikasikan 6 spesifikasi hardware utama smartphone ke dalam 4 kategori harga (`0 = Murah`, `1 = Menengah`, `2 = Mahal`, `3 = Flagship`) menggunakan algoritma *K-Nearest Neighbors* (KNN) secara *real-time*.
