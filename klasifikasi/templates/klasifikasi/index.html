@@ -5,34 +5,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="csrf-token" content="{{ csrf_token }}">
-  <title>Sistem Klasifikasi Harga Smartphone (KNN) · Django</title>
+  <title>Klasifikasi Harga Smartphone (KNN)</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Mona+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{% static 'klasifikasi/styles.css' %}">
 </head>
 <body>
   <main class="page-shell">
-    <!-- Top Header -->
+    <!-- Header Minimalis -->
     <header class="topbar">
-      <div class="brand-group">
-        <div class="brand-mark" aria-hidden="true">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="6" y="2" width="12" height="20" rx="2"></rect>
-            <line x1="12" y1="18" x2="12.01" y2="18"></line>
-          </svg>
-        </div>
-        <div>
-          <h1 class="page-title">Klasifikasi Harga Smartphone</h1>
-          <p class="page-subtitle">
-            Proyek Akhir UAS Sistem Cerdas (TI24317) &middot; Django + KNN Pipeline
-          </p>
-        </div>
-      </div>
+      <h1 class="page-title">Klasifikasi Harga Smartphone</h1>
 
       <div class="topbar-actions">
         {% if data_evaluasi %}
-        <span class="model-pill mono">
+        <span class="model-pill tabular">
           KNN k={{ data_evaluasi.best_k }} &middot; Uji {{ data_evaluasi.test_accuracy }}%
         </span>
         {% endif %}
@@ -49,7 +36,7 @@
     </div>
     {% endif %}
 
-    <!-- Main Navigation Tabs -->
+    <!-- Navigasi Tab Utama -->
     <nav class="tab-nav" role="tablist" aria-label="Navigasi Utama">
       <button
         type="button"
@@ -84,10 +71,7 @@
         <!-- Panel Kontrol Spesifikasi -->
         <section class="bento-card" aria-label="Panel Kontrol Spesifikasi">
           <div class="card-head">
-            <div>
-              <h2 class="card-title">Spesifikasi Hardware</h2>
-              <p class="card-desc">Pilih preset cepat atau geser slider untuk simulasi real-time.</p>
-            </div>
+            <h2 class="card-title">Spesifikasi Hardware</h2>
             <button type="button" id="btn-reset" class="reset-btn">Reset</button>
           </div>
 
@@ -102,7 +86,7 @@
             <div class="slider-box">
               <div class="slider-top">
                 <label class="slider-label" for="slider-{{ s.name }}">{{ s.label }}</label>
-                <span class="slider-val mono" id="val-{{ s.name }}">{{ s.value }} {{ s.unit }}</span>
+                <span class="slider-val tabular" id="val-{{ s.name }}">{{ s.value }} {{ s.unit }}</span>
               </div>
               <input
                 type="range"
@@ -114,7 +98,7 @@
                 value="{{ s.value }}"
                 data-unit="{{ s.unit }}"
               >
-              <div class="slider-range-hint mono">
+              <div class="slider-range-hint tabular">
                 <span>{{ s.min }} {{ s.unit }}</span>
                 <span>{{ s.max }} {{ s.unit }}</span>
               </div>
@@ -129,46 +113,37 @@
 
           <section class="bento-card" aria-live="polite" aria-label="Hasil Klasifikasi Real-Time">
             <div class="card-head">
-              <div>
-                <h2 class="card-title">Hasil Prediksi Harga</h2>
-                <p class="card-desc">Dihitung otomatis melalui endpoint <code class="mono">/api/predict/</code>.</p>
-              </div>
-              <span id="live-status" class="status-badge">Real-time aktif</span>
+              <h2 class="card-title">Hasil Prediksi Harga</h2>
             </div>
 
             <div class="kpi-bento">
               <div class="kpi-tile is-hero">
                 <div class="kpi-label">Kategori Harga</div>
                 <div class="kpi-value" id="res-nama">{% if hasil_awal %}{{ hasil_awal.nama }}{% else %}-{% endif %}</div>
-                <div class="kpi-sub">Output Klasifikasi KNN</div>
+                <div class="kpi-sub">Klasifikasi KNN</div>
               </div>
               <div class="kpi-tile">
                 <div class="kpi-label">Label Kelas</div>
-                <div class="kpi-value mono" id="res-kelas">{% if hasil_awal %}Kelas {{ hasil_awal.kelas }}{% else %}-{% endif %}</div>
-                <div class="kpi-sub">Rentang target 0&ndash;3</div>
+                <div class="kpi-value tabular" id="res-kelas">{% if hasil_awal %}Kelas {{ hasil_awal.kelas }}{% else %}-{% endif %}</div>
+                <div class="kpi-sub">Target 0&ndash;3</div>
               </div>
               <div class="kpi-tile">
                 <div class="kpi-label">Tingkat Keyakinan</div>
-                <div class="kpi-value mono" id="res-keyakinan">{% if hasil_awal %}{{ hasil_awal.keyakinan }}%{% else %}-{% endif %}</div>
-                <div class="kpi-sub">Suara tetangga terdekat</div>
+                <div class="kpi-value tabular" id="res-keyakinan">{% if hasil_awal %}{{ hasil_awal.keyakinan }}%{% else %}-{% endif %}</div>
+                <div class="kpi-sub">Proporsi tetangga</div>
               </div>
             </div>
 
             <div class="price-banner">
-              <div>
-                <div class="price-banner-title">Kisaran Harga Ilustratif</div>
-                <div class="price-banner-range" id="res-kisaran">{% if hasil_awal %}{{ hasil_awal.kisaran }}{% else %}-{% endif %}</div>
-                <p class="price-banner-desc" id="res-deskripsi">{% if hasil_awal %}{{ hasil_awal.deskripsi }}{% endif %}</p>
-              </div>
+              <div class="price-banner-title">Kisaran Harga Ilustratif</div>
+              <div class="price-banner-range tabular" id="res-kisaran">{% if hasil_awal %}{{ hasil_awal.kisaran }}{% else %}-{% endif %}</div>
+              <p class="price-banner-desc" id="res-deskripsi">{% if hasil_awal %}{{ hasil_awal.deskripsi }}{% endif %}</p>
             </div>
           </section>
 
           <section class="bento-card" aria-label="Distribusi Probabilitas 4 Kelas">
             <div class="card-head">
-              <div>
-                <h2 class="card-title">Distribusi Probabilitas 4 Kelas</h2>
-                <p class="card-desc">Proporsi suara dari k tetangga terdekat pada tiap kategori harga.</p>
-              </div>
+              <h2 class="card-title">Distribusi Probabilitas 4 Kelas</h2>
             </div>
 
             <div class="prob-list" id="prob-bars">
@@ -179,18 +154,16 @@
                   <div class="prob-track" aria-hidden="true">
                     <div class="prob-fill" style="width: {{ item.persen }}%;"></div>
                   </div>
-                  <div class="prob-pct mono">{{ item.persen }}%</div>
+                  <div class="prob-pct tabular">{{ item.persen }}%</div>
                 </div>
                 {% endfor %}
               {% endif %}
             </div>
           </section>
 
-          <section class="bento-card" aria-label="Ringkasan Analisis Kontekstual">
-            <div class="card-head" style="margin-bottom: 10px;">
-              <div>
-                <h2 class="card-title">Ringkasan Analisis</h2>
-              </div>
+          <section class="bento-card" aria-label="Ringkasan Analisis">
+            <div class="card-head" style="margin-bottom: 12px;">
+              <h2 class="card-title">Ringkasan Analisis</h2>
             </div>
             <ul class="analysis-list" id="res-analisis">
               {% if hasil_awal %}
@@ -215,20 +188,20 @@
       <div class="eval-kpi-grid">
         <div class="bento-card">
           <div class="kpi-label">Akurasi Data Latih</div>
-          <div class="kpi-value mono">{{ data_evaluasi.train_accuracy }}%</div>
-          <div class="kpi-sub">{{ data_evaluasi.train_rows }} data latih (75%)</div>
+          <div class="kpi-value tabular">{{ data_evaluasi.train_accuracy }}%</div>
+          <div class="kpi-sub tabular">{{ data_evaluasi.train_rows }} data latih (75%)</div>
         </div>
         <div class="bento-card">
           <div class="kpi-label">Akurasi Data Uji</div>
-          <div class="kpi-value mono" style="color: var(--accent-primary);">{{ data_evaluasi.test_accuracy }}%</div>
-          <div class="kpi-sub">{{ data_evaluasi.test_rows }} data uji (25%)</div>
+          <div class="kpi-value tabular" style="color: var(--accent-primary);">{{ data_evaluasi.test_accuracy }}%</div>
+          <div class="kpi-sub tabular">{{ data_evaluasi.test_rows }} data uji (25%)</div>
         </div>
         <div class="bento-card">
           <div class="kpi-label">Selisih Latih vs Uji</div>
-          <div class="kpi-value mono">{{ data_evaluasi.gap }}%</div>
+          <div class="kpi-value tabular">{{ data_evaluasi.gap }}%</div>
           <div class="kpi-sub">
             {% if data_evaluasi.status_stabil %}
-            <span class="status-badge is-highlight">Stabil (Tidak Overfitting)</span>
+            <span class="status-badge">Stabil (Tidak Overfitting)</span>
             {% else %}
             <span class="status-badge">Perlu Penyesuaian k</span>
             {% endif %}
@@ -236,18 +209,15 @@
         </div>
         <div class="bento-card">
           <div class="kpi-label">Nilai k Terbaik</div>
-          <div class="kpi-value mono">k = {{ data_evaluasi.best_k }}</div>
-          <div class="kpi-sub">Dari uji k = 3, 5, 7, 9, 11</div>
+          <div class="kpi-value tabular">k = {{ data_evaluasi.best_k }}</div>
+          <div class="kpi-sub tabular">Uji k = 3, 5, 7, 9, 11</div>
         </div>
       </div>
 
       <div class="eval-bento-row">
         <section class="bento-card">
           <div class="card-head">
-            <div>
-              <h2 class="card-title">Confusion Matrix (4&times;4 Data Uji)</h2>
-              <p class="card-desc">Baris menunjukkan label aktual dan kolom menunjukkan prediksi model pada {{ data_evaluasi.test_rows }} data uji.</p>
-            </div>
+            <h2 class="card-title">Confusion Matrix (4&times;4 Data Uji)</h2>
           </div>
           <div class="table-wrap">
             <table class="bento-table">
@@ -264,7 +234,7 @@
                 <tr>
                   <td class="row-head">{{ baris.label }}</td>
                   {% for sel in baris.sel %}
-                  <td class="mono cm-cell cm-lv-{{ sel.level }}">{{ sel.nilai }}</td>
+                  <td class="tabular cm-cell cm-lv-{{ sel.level }}">{{ sel.nilai }}</td>
                   {% endfor %}
                 </tr>
                 {% endfor %}
@@ -275,31 +245,28 @@
 
         <section class="bento-card">
           <div class="card-head">
-            <div>
-              <h2 class="card-title">Eksperimen Nilai k Ganjil</h2>
-              <p class="card-desc">Perbandingan akurasi latih (abu-abu) vs akurasi uji (biru) untuk mencegah overfitting.</p>
-            </div>
+            <h2 class="card-title">Eksperimen Nilai k Ganjil</h2>
           </div>
           <div class="k-list">
             {% for item in data_evaluasi.k_experiment %}
             <div class="k-item {% if item.terpilih %}is-best{% endif %}">
               <div class="k-item-head">
-                <span class="mono">
+                <span class="tabular">
                   k = {{ item.k }}
-                  {% if item.terpilih %}<span class="status-badge is-highlight">Terpilih</span>{% endif %}
+                  {% if item.terpilih %}<span class="status-badge">Terpilih</span>{% endif %}
                 </span>
-                <span class="mono" style="color: var(--text-secondary);">Selisih {{ item.gap_pct }}%</span>
+                <span class="tabular" style="color: var(--text-secondary);">Selisih {{ item.gap_pct }}%</span>
               </div>
               <div class="k-bars">
                 <div class="k-bar-line">
                   <span>Latih</span>
                   <div class="k-track"><div class="k-fill-train" style="width: {{ item.train_pct }}%;"></div></div>
-                  <span class="mono">{{ item.train_pct }}%</span>
+                  <span class="tabular">{{ item.train_pct }}%</span>
                 </div>
                 <div class="k-bar-line">
                   <span>Uji</span>
                   <div class="k-track"><div class="k-fill-test" style="width: {{ item.test_pct }}%;"></div></div>
-                  <span class="mono">{{ item.test_pct }}%</span>
+                  <span class="tabular">{{ item.test_pct }}%</span>
                 </div>
               </div>
             </div>
@@ -311,10 +278,7 @@
       <div class="pipeline-grid">
         <section class="bento-card">
           <div class="card-head">
-            <div>
-              <h2 class="card-title">Classification Report per Kelas</h2>
-              <p class="card-desc">Presisi, Recall, dan F1-Score aktual pada 500 data uji.</p>
-            </div>
+            <h2 class="card-title">Classification Report per Kelas</h2>
           </div>
           <div class="table-wrap">
             <table class="bento-table">
@@ -331,10 +295,10 @@
                 {% for row in data_evaluasi.classification_report_rows %}
                 <tr>
                   <td class="row-head">{{ row.kelas }}</td>
-                  <td class="mono">{{ row.precision }}</td>
-                  <td class="mono">{{ row.recall }}</td>
-                  <td class="mono">{{ row.f1_score }}</td>
-                  <td class="mono">{{ row.support }}</td>
+                  <td class="tabular">{{ row.precision }}</td>
+                  <td class="tabular">{{ row.recall }}</td>
+                  <td class="tabular">{{ row.f1_score }}</td>
+                  <td class="tabular">{{ row.support }}</td>
                 </tr>
                 {% endfor %}
               </tbody>
@@ -344,10 +308,7 @@
 
         <section class="bento-card">
           <div class="card-head">
-            <div>
-              <h2 class="card-title">Alur Pipeline: StandardScaler + KNN</h2>
-              <p class="card-desc">Ringkasan arsitektur Machine Learning untuk pencegahan data leakage.</p>
-            </div>
+            <h2 class="card-title">Alur Pipeline: StandardScaler + KNN</h2>
           </div>
           <ul class="analysis-list">
             <li>
@@ -364,10 +325,6 @@
       </div>
       {% endif %}
     </section>
-
-    <p class="footer-note">
-      Dataset: Kaggle &mdash; Mobile Price Classification (2.000 baris) &middot; Proyek Akhir Sistem Cerdas (TI24317)
-    </p>
   </main>
 
   <script>
@@ -436,7 +393,6 @@
       const sliders = Array.from(document.querySelectorAll('.slider-list input[type="range"]'));
       const presetButtons = Array.from(document.querySelectorAll(".preset-btn[data-preset]"));
       const resetBtn = document.getElementById("btn-reset");
-      const liveStatus = document.getElementById("live-status");
       const apiError = document.getElementById("api-error");
 
       function perbaruiLabelSlider(slider) {
@@ -481,7 +437,7 @@
           trackDiv.appendChild(fillDiv);
 
           const pctDiv = document.createElement("div");
-          pctDiv.className = "prob-pct mono";
+          pctDiv.className = "prob-pct tabular";
           pctDiv.textContent = `${item.persen}%`;
 
           row.appendChild(nameDiv);
@@ -507,7 +463,6 @@
           requestController.abort();
         }
         requestController = new AbortController();
-        liveStatus.textContent = "Menghitung...";
         apiError.style.display = "none";
 
         try {
@@ -524,16 +479,13 @@
           if (!res.ok) {
             apiError.textContent = data.error || "Terjadi kesalahan validasi input.";
             apiError.style.display = "block";
-            liveStatus.textContent = "Input tidak valid";
             return;
           }
           renderHasilPrediksi(data);
-          liveStatus.textContent = "Real-time aktif";
         } catch (err) {
           if (err.name !== "AbortError") {
             apiError.textContent = "Gagal menghubungi endpoint /api/predict/.";
             apiError.style.display = "block";
-            liveStatus.textContent = "Koneksi gagal";
           }
         }
       }
